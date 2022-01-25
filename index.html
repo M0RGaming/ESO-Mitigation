@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Mit Calc</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.1.0/math.js" integrity="sha512-UvIACSDvB2RfwkjYTjYkuJq901Y6L4nZNoOHZMRBvSdIiIm3BFrtOdgjr5EZSPYR5cU/P6XUW6TN/578FuTysw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+	<div id="selections">
+		<p style="display: inline;">Are you in PvP?</p>
+		<input type="checkbox" id="cyro">
+		<br>
+		<p style="display: inline;">How much resistances do you have?</p>
+		<input type="number" id="res">
+		<br>
+		<p style="display: inline;">How much pen does the enemy have?</p>
+		<input type="number" id="pen">
+		<br>
+		<p style="display: inline;">Additional Mitigation in % (Seperate by Commas)</p>
+		<input id="additional">
+	</div>
+
+	<button onclick="calc()">Calculate Mitigation</button>
+
+	<div>
+		<p>Formula: <span id="formula"></span></p>
+	</div>
+
+	<p>Total Mitigation: <span id="out">0</span>%</p>
+
+
+
+	<script type="text/javascript">
+		function calc() {
+			let out = "(1-(1-0.1)"
+			if (document.getElementById("cyro").checked) {
+				out += "*(1-0.55)"
+			}
+
+			let res = document.getElementById("res").valueAsNumber
+			let pen = document.getElementById("pen").valueAsNumber
+			let eRes = Math.max(Math.min(res-pen,33000),0)
+
+			out += `*(1-(${eRes}/66000))`
+
+
+			let lsR = document.getElementById("additional").value
+			let ls = lsR.replaceAll(" ","").split(",")
+			for (x in ls) {
+				out += `*(1-${ls[x]}/100)`
+			}
+
+			out += ")*100"
+
+			document.getElementById("formula").innerHTML = out
+			document.getElementById("out").innerHTML = math.evaluate(out).toFixed(2)
+		}
+	</script>
+</body>
+</html>
