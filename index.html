@@ -41,6 +41,11 @@
 
 			let res = document.getElementById("res").valueAsNumber
 			let pen = document.getElementById("pen").valueAsNumber
+
+			if (Number.isNaN(res)) {res = 0}
+			if (Number.isNaN(pen)) {pen = 0}
+
+
 			let eRes = Math.max(Math.min(res-pen,33000),0)
 
 			out += `*(1-(${eRes}/66000))`
@@ -49,10 +54,14 @@
 			let lsR = document.getElementById("additional").value
 			let ls = lsR.replaceAll(" ","").split(",")
 			for (x in ls) {
-				out += `*(1-${ls[x]}/100)`
+				if (ls[x] != "") {
+					out += `*(1-${ls[x]}/100)`
+				}
 			}
 
+
 			out += ")*100"
+
 
 			document.getElementById("formula").innerHTML = out
 			document.getElementById("out").innerHTML = math.evaluate(out).toFixed(2)
