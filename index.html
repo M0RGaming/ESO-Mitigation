@@ -15,6 +15,42 @@
 	<script type="text/javascript" async
 	  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
 	</script>
+	<style type="text/css">
+		#table {
+		  font-family: Arial, Helvetica, sans-serif;
+		  border-collapse: collapse;
+		}
+
+		#table td, #table th {
+		  border: 1px solid #ddd;
+		  padding: 8px;
+		}
+
+		#table tr:nth-child(even){background-color: #f2f2f2;}
+
+		#table tr:hover {background-color: #ddd;}
+
+		#table th {
+		  padding-top: 12px;
+		  padding-bottom: 12px;
+		  text-align: left;
+		  background-color: #04AA6D;
+		  color: white;
+		}
+
+		#low {
+			background-color: #DFD !important;
+			color: black !important;
+		}
+		#med {
+			background-color: #FCC !important;
+			color: black !important;
+		}
+		#high {
+			background-color: #F99 !important;
+			color: black !important;
+		}
+	</style>
 </head>
 <body>
 
@@ -39,7 +75,32 @@
 	<div id="math">\({}\)</div>
 	<p>Total Mitigation = <span id="out">0</span>%</p>
 
+	<br>
+	<br>
+	<br>
 
+	<table id="table">
+		<thead>
+			<th>Enemy Penetration</th>
+			<th>Base Mitigation</th>
+			<th>Blocking Mitigation</th>
+		</thead>
+		<tr>
+			<th id="low">0</span></th>
+			<td><span id="lowBase">0</span>%</td>
+			<td><span id="lowBlock">0</span>%</td>
+		</tr>
+		<tr>
+			<th id="med">12,000</th>
+			<td><span id="medBase">0</span>%</td>
+			<td><span id="medBlock">0</span>%</td>
+		</tr>
+		<tr>
+			<th id="high">18,000</th>
+			<td> <span id="highBase">0</span>%</td>
+			<td> <span id="highBlock">0</span>%</td>
+		</tr>
+	</table>
 
 	<script type="text/javascript">
 		function calc() {
@@ -80,6 +141,52 @@
 			let container = MathJax.Hub.getAllJax("math")[0]
 			container.Text(textOut + math.parse(out).toTex())
 			document.getElementById("out").innerHTML = math.evaluate(out).toFixed(2)
+			extraCalcs()
+		}
+
+
+		function extraCalcs() {
+			
+			document.getElementById("lowBase").innerHTML = calcInternal(0,false)
+			document.getElementById("lowBlock").innerHTML = calcInternal(0,true)
+			document.getElementById("medBase").innerHTML = calcInternal(12000,false)
+			document.getElementById("medBlock").innerHTML = calcInternal(12000,true)
+			document.getElementById("highBase").innerHTML = calcInternal(18000,false)
+			document.getElementById("highBlock").innerHTML = calcInternal(18000,true)
+		}
+
+		function calcInternal(pen,blocking) {
+			let out = "(1-(1-0.1)"
+			if (document.getElementById("cyro").checked) {
+				out += "*(1-0.55)"
+			}
+
+			let res = document.getElementById("res").valueAsNumber
+
+			if (Number.isNaN(res)) {res = 0}
+			if (Number.isNaN(pen)) {pen = 0}
+
+
+			let eRes = Math.max(Math.min(res-pen,33000),0)
+
+			out += `*(1-(${eRes}/66000))`
+
+			if (blocking) {
+				out += "*(1-0.50)"
+			}
+
+
+			let lsR = document.getElementById("additional").value
+			let ls = lsR.replaceAll(" ","").split(",")
+			for (x in ls) {
+				if (ls[x] != "") {
+					out += `*(1-${ls[x]}/100)`
+				}
+			}
+
+
+			out += ")*100"
+			return math.evaluate(out).toFixed(2)
 		}
 	</script>
 </body>
