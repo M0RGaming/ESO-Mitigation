@@ -28,6 +28,9 @@
 		<p style="display: inline;">How much pen does the enemy have?</p>
 		<input type="number" id="pen">
 		<br>
+		<p style="display: inline;">Are you Blocking?</p>
+		<input type="checkbox" id="blocking">
+		<br>
 		<p style="display: inline;">Additional Mitigation in % (Seperate by Commas)</p>
 		<input id="additional">
 	</div>
@@ -55,6 +58,10 @@
 			let eRes = Math.max(Math.min(res-pen,33000),0)
 
 			out += `*(1-(${eRes}/66000))`
+
+			if (document.getElementById("blocking").checked) {
+				out += "*(1-0.50)"
+			}
 
 
 			let lsR = document.getElementById("additional").value
