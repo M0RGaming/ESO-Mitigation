@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Lamp Damage Calc</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.1.0/math.js" integrity="sha512-UvIACSDvB2RfwkjYTjYkuJq901Y6L4nZNoOHZMRBvSdIiIm3BFrtOdgjr5EZSPYR5cU/P6XUW6TN/578FuTysw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+	<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+		  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+		});
+	</script>
+	<script type="text/javascript" async
+	  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+	</script>
+	<style type="text/css">
+		#table {
+		  font-family: Arial, Helvetica, sans-serif;
+		  border-collapse: collapse;
+		}
+
+		#table td, #table th {
+		  border: 1px solid #ddd;
+		  padding: 8px;
+		}
+
+		#table tr:nth-child(even){background-color: #f2f2f2;}
+
+		#table tr:hover {background-color: #ddd;}
+
+		#table th {
+		  padding-top: 12px;
+		  padding-bottom: 12px;
+		  text-align: left;
+		  background-color: #04AA6D;
+		  color: white;
+		}
+
+		#low {
+			background-color: #DFD !important;
+			color: black !important;
+		}
+		#med {
+			background-color: #FCC !important;
+			color: black !important;
+		}
+		#high {
+			background-color: #F99 !important;
+			color: black !important;
+		}
+		.green {
+			background-color: #DFD !important;
+			color: black !important;
+		}
+		.red {
+			background-color: #F99 !important;
+			color: black !important;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="selections">
+		<p style="display: inline;">Are you in PvP?</p>
+		<input type="checkbox" id="cyro" checked>
+		<br>
+		<p style="display: inline;">How much Resistances does the enemy have?</p>
+		<input type="number" id="res" value="33000">
+		<br>
+		<p style="display: inline;">Are they Blocking?</p>
+		<input type="checkbox" id="blocking">
+		<br>
+		<p style="display: inline;">Additional Mitigation in % (Seperate by Commas)</p>
+		<input id="additional">
+		<br>
+		<br>
+		<p style="display: inline;">Do you have Minor Berserk?</p>
+		<input type="checkbox" id="minorBerserk">
+		<br>
+		<p style="display: inline;">Do you have Major Berserk?</p>
+		<input type="checkbox" id="majorBerserk">
+		<br>
+		<p style="display: inline;">Do you have Minor Maim?</p>
+		<input type="checkbox" id="minorMaim">
+		<br>
+		<p style="display: inline;">Do you have Major Maim?</p>
+		<input type="checkbox" id="majorMaim">
+		<br>
+		<p style="display: inline;">Additional Damage Sources in % (Seperate by Commas)</p>
+		<input id="additionalDamage">
+		<br>
+		<br>
+		<p style="display: inline;">Initial Damage</p>
+		<input id="damage" value="100000">
+	</div>
+	<button onclick="calc()">Calculate Damage Done</button>
+	<br>
+	<br>
+	<br>
+	<table id="table">
+		<thead>
+			<th>Penetration</th>
+			<th>Without Set Active</th>
+			<th>With Set Active</th>
+			<th>Percent Difference</th>
+		</thead>
+		<tr>
+			<th id="low">0</span></th>
+			<td><span id="lowNo">0</span></td>
+			<td><span id="lowYes">0</span></td>
+			<td><span id="lowDiff">0</span>%</td>
+		</tr>
+		<tr>
+			<th id="med">9,000</th>
+			<td><span id="medNo">0</span></td>
+			<td><span id="medYes">0</span></td>
+			<td><span id="medDiff">0</span>%</td>
+		</tr>
+		<tr>
+			<th id="high">18,000</th>
+			<td> <span id="highNo">0</span></td>
+			<td> <span id="highYes">0</span></td>
+			<td> <span id="highDiff">0</span>%</td>
+		</tr>
+	</table>
+	<br>
+	<h1 style="display: inline;">Penetration Breakpoint: <span id="Breakpoint"></span></p>
+
+	<script type="text/javascript">
+
+		function calc() {
+			
+			document.getElementById("lowNo").innerHTML = calcInternal(0,false)
+			document.getElementById("lowYes").innerHTML = calcInternal(0,true)
+			document.getElementById("medNo").innerHTML = calcInternal(12000,false)
+			document.getElementById("medYes").innerHTML = calcInternal(12000,true)
+			document.getElementById("highNo").innerHTML = calcInternal(18000,false)
+			document.getElementById("highYes").innerHTML = calcInternal(18000,true)
+
+			document.getElementById("lowDiff").innerHTML = calcDiff('low')
+			document.getElementById("medDiff").innerHTML = calcDiff('med')
+			document.getElementById("highDiff").innerHTML = calcDiff('high')
+
+			document.getElementById("Breakpoint").innerHTML = calcBreakpoint()
+
+		}
+		function calcDiff(row) {
+			let inactive = document.getElementById(row+"No").innerHTML
+			let active = document.getElementById(row+"Yes").innerHTML
+			let out = ((active/inactive)-1)*100
+			if (out < 0) {
+				document.getElementById(row+"Diff").parentElement.classList = ['red']
+			} else {
+				document.getElementById(row+"Diff").parentElement.classList = ['green']
+			}
+			return out.toFixed(2)
+		}
+
+		function calcInternal(pen,active) {
+			let out = "(1-(1-0.1)"
+			if (document.getElementById("cyro").checked) {
+				out += "*(1-0.55)"
+			}
+
+			let res = document.getElementById("res").valueAsNumber
+
+			if (Number.isNaN(res)) {res = 0}
+			if (Number.isNaN(pen)) {pen = 0}
+
+
+			let eRes = Math.max(Math.min(res-pen,33000),0)
+
+			let damageMult = 1
+			if (active) {
+				eRes = 0
+				damageMult -= 0.46
+			}
+
+			out += `*(1-(${eRes}/66000))`
+
+			if (document.getElementById("blocking").checked) {
+				out += "*(1-0.50)"
+			}
+
+
+			let lsR = document.getElementById("additional").value
+			let ls = lsR.replaceAll(" ","").split(",")
+			for (x in ls) {
+				if (ls[x] != "") {
+					out += `*(1-${ls[x]}/100)`
+				}
+			}
+
+
+			out += ")"
+
+			mit = math.evaluate(out).toFixed(2)
+
+			let initialDamage = document.getElementById("damage").valueAsNumber
+
+			if (Number.isNaN(initialDamage)) {initialDamage = 100000}
+
+			let ad = document.getElementById("additionalDamage").value
+			ls = ad.replaceAll(" ","").split(",")
+
+			for (x in ls) {
+				y = parseFloat(ls[x])
+				if (!Number.isNaN(y)) {
+					damageMult += y/100
+				}
+			}
+
+			if (document.getElementById("minorBerserk").checked) {
+				damageMult += 0.05
+			}
+			if (document.getElementById("majorBerserk").checked) {
+				damageMult += 0.1
+			}
+			if (document.getElementById("minorMaim").checked) {
+				damageMult -= 0.05
+			}
+			if (document.getElementById("majorMaim").checked) {
+				damageMult -= 0.1
+			}
+
+
+			out += ")"
+
+			totalDamage = initialDamage*damageMult*(1-mit)
+
+			return totalDamage.toFixed(0)
+			//return mit
+		}
+
+
+		function calcBreakpoint() {
+			active = calcInternal(0,true)
+
+			function recurse(step, min, max) {
+				if (step == 0.1) {return max}
+				//if (max < 0) {}
+				for (let pen = min; pen < 33000; pen+=step) {
+					inactive = calcInternal(pen,false)
+					out = ((active/inactive)-1)*100
+					if (out <= 0) {
+						if ((pen-step) <= 0) {
+							return "No Breakpoint (Never Worth Using)"
+						} 
+						return recurse(step/10,pen-step,pen)
+					}
+				}
+				return "No Breakpoint (Always Worth Using)"
+			}
+			return recurse(10000,1,100000)
+		}
+	</script>
+</body>
+</html>
